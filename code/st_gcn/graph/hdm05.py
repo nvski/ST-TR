@@ -2,31 +2,38 @@ import numpy as np
 from . import tools
 
 # Joint index:
-# {0,  "Nose"}
-# {1,  "Neck"},
-# {2,  "RShoulder"},
-# {3,  "RElbow"},
-# {4,  "RWrist"},
-# {5,  "LShoulder"},
-# {6,  "LElbow"},
-# {7,  "LWrist"},
-# {8,  "RHip"},
-# {9,  "RKnee"},
-# {10, "RAnkle"},
-# {11, "LHip"},
-# {12, "LKnee"},
-# {13, "LAnkle"},
-# {14, "REye"},
-# {15, "LEye"},
-# {16, "REar"},
-# {17, "LEar"},
+# {0,  "HeadTop"}
+# {1,  "Head"},
+# {2,  "Neck"},
+# {3,  "RClavicle"},
+# {4,  "RShoulder"},
+# {5,  "RElbow"},
+# {6,  "RWrist"},
+# {7,  "RFingers"},
+# {8,  "LClavicle"},
+# {9,  "LShoulder"},
+# {10, "LElbow"},
+# {11, "LWrist"},
+# {12, "LFingers"}
+# {13, "Chest"}
+# {14, "Belly"}
+# {15, "Root"}
+# {16, "RHip"},
+# {17, "RKnee"},
+# {18, "RAnkle"},
+# {19, "RToes"},
+# {20, "LHip"},
+# {21, "LKnee"},
+# {22, "LAnkle"},
+# {23, "LToes"},
+
 
 # Edge format: (origin, neighbor)
-num_node = 18
+num_node = 24
 self_link = [(i, i) for i in range(num_node)]
-inward = [(4, 3), (3, 2), (7, 6), (6, 5), (13, 12), (12, 11), (10, 9), (9, 8),
-          (11, 5), (8, 2), (5, 1), (2, 1), (0, 1), (15, 0), (14, 0), (17, 15),
-          (16, 14)]
+inward = [(0, 1), (1, 2), (3, 2), (8, 2), (13, 2), (4, 3), (5, 4), (6, 5), (7, 6),  # Top + right_arm
+          (9, 8), (10, 9), (11, 10), (12, 11), (14, 13), (15, 14), (16, 15), (20, 15),  # left arm + bottom
+          (17, 16), (18, 17), (19, 18), (21, 20), (22, 21), (23, 22)]  # legs
 outward = [(j, i) for (i, j) in inward]
 neighbor = inward + outward
 
