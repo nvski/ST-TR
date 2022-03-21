@@ -158,10 +158,10 @@ def gendata(file_list, out_path, ignored_sample_path, benchmark, part):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='NTU-RGB-D 120 Skeleton Data Extraction')
-    parser.add_argument('--part1-path', default='./Skeletons/nturgb+d_skeletons/')
-    parser.add_argument('--part2-path', default='./new_skeletons/')
+    parser.add_argument('--part1-path', default='../data/nturgbd_raw/nturgb+d_skeletons/') #default='./Skeletons/nturgb+d_skeletons/'
+    #parser.add_argument('--part2-path', default='./new_skeletons/')
     parser.add_argument('--ignored-sample-path',
-                        default='./missing_samples.txt')
+                        default='../data/nturgbd_raw/NTU_RGBD120_samples_with_missing_skeletons.txt') #'./missing_samples.txt'
     parser.add_argument('--out-folder', default='./new_data_processed/')
 
     benchmark = ['xsub']
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
     # Combine skeleton file paths
     file_list = []
-    for folder in [arg.part1_path, arg.part2_path]:
+    for folder in [arg.part1_path]: #[arg.part1_path, arg.part2_path]
         for path in os.listdir(folder):
             file_list.append((folder, path))
 

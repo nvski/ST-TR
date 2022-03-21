@@ -2,7 +2,7 @@ import numpy as np
 import argparse
 import os
 import sys
-from .ntu_read_skeleton import read_xyz
+from ntu_read_skeleton import read_xyz
 from numpy.lib.format import open_memmap
 import pickle
 
@@ -99,10 +99,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='NTU-RGB-D Data Converter.')
     parser.add_argument(
-        '--data_path', default='data/NTU-RGB-D/nturgb+d_skeletons')
+        '--data_path', default='../../data/nturgbd/nturgb+d_skeletons')
     parser.add_argument(
         '--ignored_sample_path',
-        default='resource/NTU-RGB-D/samples_with_missing_skeletons.txt')
+        default='../../data/nturgbd/samples_with_missing_skeletons.txt')
     parser.add_argument('--out_folder', default='data/NTU-RGB-D')
 
     benchmark = ['xsub', 'xview']

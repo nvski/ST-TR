@@ -41,7 +41,7 @@ class Unit2D(nn.Module):
 
         self.bn = nn.BatchNorm2d(D_out)
         self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(dropout, inplace=True)
+        self.dropout = nn.Dropout(dropout, inplace=False) #True
 
         # initialize
         conv_init(self.conv)

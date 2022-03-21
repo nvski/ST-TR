@@ -2,10 +2,10 @@ import numpy as np
 import argparse
 import os
 import sys
-from .ntu_read_skeleton import read_xyz
+from ntu_read_skeleton import read_xyz
 from numpy.lib.format import open_memmap
 import pickle
-
+from tqdm import tqdm
 '''
 Code from https://github.com/kenziyuliu/MS-G3D/blob/master/data_gen/ntu120_gendata.py
 '''
@@ -156,11 +156,11 @@ def gendata(file_list, out_path, ignored_sample_path, benchmark, part):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='NTU-RGB-D 120 Skeleton Data Extraction')
-    parser.add_argument('--part1-path', default='../data/nturgbd/nturgb+d_skeletons/')
-    parser.add_argument('--part2-path', default='../data/nturgbd/nturgb+d_skeletons120/')
+    parser.add_argument('--part1-path', default='../../data/nturgbd/nturgb+d_skeletons/')
+    #parser.add_argument('--part2-path', default='../../data/nturgbd/nturgb+d_skeletons120/')
     parser.add_argument('--ignored-sample-path',
-                        default='../data/nturgbd/NTU_RGBD120_samples_with_missing_skeletons.txt')
-    parser.add_argument('--out-folder', default='../data/ntu120/')
+                        default='../../data/nturgbd/NTU_RGBD120_samples_with_missing_skeletons.txt')
+    parser.add_argument('--out-folder', default='../../data/ntu120/')
 
     benchmark = ['xsub', 'xset']
     part = ['train', 'val']
@@ -168,7 +168,7 @@ if __name__ == '__main__':
 
     # Combine skeleton file paths
     file_list = []
-    for folder in [arg.part1_path, arg.part2_path]:
+    for folder in [arg.part1_path]: #[arg.part1_path, arg.part2_path]:
         for path in os.listdir(folder):
             file_list.append((folder, path))
 

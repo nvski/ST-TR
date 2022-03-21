@@ -29,6 +29,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
+from tqdm import tqdm
 
 # mongodb
 import os
@@ -57,7 +58,7 @@ def get_parser():
     parser.add_argument('--log_dir', type=str,
                         default="./checkpoints/" + name_exp)
     parser.add_argument('--exp_name', type=str, default=name_exp)
-    parser.add_argument('--num_workers', type=int, default=10)
+    parser.add_argument('--num_workers', type=int, default=6)
     parser.add_argument('--clip_grad_norm', type=float, default=0.5)
     parser.add_argument('--writer_enabled', type=arg_boolean, default=True)
     parser.add_argument('--gcn0_flag', type=arg_boolean, default=False)
@@ -189,9 +190,9 @@ def get_parser():
     parser.add_argument(
         '--nesterov', type=str2bool, default=False, help='use nesterov or not')
     parser.add_argument(
-        '--batch-size', type=int, default=256, help='training batch size')
+        '--batch-size', type=int, default=1, help='training batch size')
     parser.add_argument(
-        '--test-batch-size', type=int, default=256, help='test batch size')
+        '--test-batch-size', type=int, default=1, help='test batch size')
     parser.add_argument(
         '--start-epoch',
         type=int,
@@ -960,14 +961,14 @@ if __name__ == '__main__':
     p = parser.parse_args()
     if p.config is not None:
         with open(p.config, 'r') as f:
-            default_arg = yaml.load(f)
+            default_arg = yaml.safe_load(f)#yaml.load(f)
         key = vars(p).keys()
         for k in default_arg.keys():
             if k not in key:
                 print('WRONG ARG: {}'.format(k))
                 assert (k in key)
         parser.set_defaults(**default_arg)
-
+    #torch.autograd.set_detect_anomaly(True)
     arg = parser.parse_args()
     processor = Processor(arg)
     processor.start()

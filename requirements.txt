@@ -1,17 +1,23 @@
-channels:
-  - conda-forge
-  - pytorch
-dependencies:
-    - ignite==1.1.0
-  - networkx=2.3
-  - numpy=1.16.3
-  - scipy=1.2.1
-  - scikit-learn=0.20.3
-  - tensorboardX=1.6
-  - tensorflow=1.13.1
-  - pytorch=1.1.0
-  - torchvision=0.2.2
-  - seaborn
-  - pandas
-  - matplotlib
-  - pyyaml
+
+  ignite==1.1.0
+  networkx==2.3
+  numpy==1.16.3
+  scipy==1.2.1
+  scikit-learn==0.20.3
+  tensorboardX==1.6
+  tensorflow==1.13.1
+  pytorch==1.1.0
+  torchvision==0.2.2
+  seaborn
+  pandas
+  matplotlib
+  pyyaml
+
+
+sacred 0.8.2 #- automated experimentation module
+
+tensorboardx
+adamod 0.0.3
+configargparse #set config via config file (good for experimentation)
+
+#-v UCF-101 -o UCF_dataset -s 0.8 -fps 1  --------------dataset processing arguments
