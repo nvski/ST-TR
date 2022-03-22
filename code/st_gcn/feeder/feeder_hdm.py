@@ -1,15 +1,19 @@
+from itertools import chain
 import numpy as np
+import pandas as pd
 import pickle
 import torch
 from torch.utils.data import Dataset
 import sys
+import warnings
 
 sys.path.extend(['../'])
 from .feeder import tools
 
 
-class Feeder_kinetics(Dataset):
-    def __init__(self, data_path, label_path,
+min_len = 132  # 20-th percentile of train set
+class Feeder_hdm05(Dataset):
+    def __init__(self, data_path, label_path='ignored',
                  random_choose=False, random_shift=False, random_move=False,
                  window_size=-1, normalization=False, debug=False, use_mmap=True):
         """
@@ -49,25 +53,48 @@ class Feeder_kinetics(Dataset):
 
     def load_data(self):
         # data: N C V T M
+        
+        self.raw_data = pd.read_pickle(self.data_path)
+        self.seqs = {seq["seq_id"]: seq["data"] for seq in self.raw_data}
+        self.annotations = list(chain(*[t["annotations"] for t in self.raw_data]))
+        
+        def cut(annotations):
+            for ann in annotations:
+                dur = ann["duration"]
+                if dur < min_len: continue
+                splits = round(dur/min_len)
+                for split in range(splits):
+                    start = (dur-min_len)*split//splits
+                    yield {**ann, "start_frame":start, "duration":min_len}     
+        
+        self.annotations = list(cut(self.annotations))
+        self.data = np.stack([
+            self.seqs[ann["seq_id"]][ann["start_frame"]:ann["start_frame"]+ann["duration"]]
+            for ann in self.annotations        
+        ])
+        self.data = self.data.reshape(*self.data.shape, 1)
+        self.data = self.data.transpose(0,3,1,2,4)
+        self.label = [ann["action_id"] for ann in self.annotations]
+        self.sample_name = [ann["seq_id"] for ann in self.annotations]
 
-        try:
-            with open(self.label_path) as f:
-                self.sample_name, self.label = pickle.load(f)
-        except:
-            # for pickle file from python2
-            with open(self.label_path, 'rb') as f:
-                self.sample_name, self.label = pickle.load(f, encoding='latin1')
+        # try:
+        #     with open(self.label_path) as f:
+        #         self.sample_name, self.label = pickle.load(f)
+        # except:
+        #     # for pickle file from python2
+        #     with open(self.label_path, 'rb') as f:
+        #         self.sample_name, self.label = pickle.load(f, encoding='latin1')
 
-        # load data
-        if self.use_mmap:
-            self.data = np.load(self.data_path, mmap_mode='r')
-        else:
-            self.data = np.load(self.data_path)
-        if self.debug:
-            self.label = self.label[0:100]
-            self.data = self.data[0:100]
-            self.sample_name = self.sample_name[0:100]
-        self.N, self.C, self.T, self.V, self.M = self.data.shape
+        # # load data
+        # if self.use_mmap:
+        #     self.data = np.load(self.data_path, mmap_mode='r')
+        # else:
+        #     self.data = np.load(self.data_path)
+        # if self.debug:
+        #     self.label = self.label[0:100]
+        #     self.data = self.data[0:100]
+        #     self.sample_name = self.sample_name[0:100]
+        # self.N, self.C, self.T, self.V, self.M = self.data.shape
 
         # # N, T, M, V, C
         # data_tr = self.data.transpose((0, 2, 4, 3, 1))
@@ -98,14 +125,15 @@ class Feeder_kinetics(Dataset):
         # print("std: ", out_std)
         # print("min: ", out_min)
         # stop
-    def get_mean_map(self):
-        data = self.data
-        N, C, T, V, M = data.shape
-        self.mean_map = data.mean(axis=2, keepdims=True).mean(axis=4, keepdims=True).mean(axis=0)
-        self.std_map = data.transpose((0, 2, 4, 1, 3)).reshape((N * T * M, C * V)).std(axis=0).reshape((C, 1, V, 1))
+
+    # def get_mean_map(self):
+    #     data = self.data
+    #     N, C, T, V, M = data.shape
+    #     self.mean_map = data.mean(axis=2, keepdims=True).mean(axis=4, keepdims=True).mean(axis=0)
+    #     self.std_map = data.transpose((0, 2, 4, 1, 3)).reshape((N * T * M, C * V)).std(axis=0).reshape((C, 1, V, 1))
 
     def __len__(self):
-        return len(self.label)
+        return len(self.data)
 
     def __iter__(self):
         return self
@@ -132,6 +160,7 @@ class Feeder_kinetics(Dataset):
         return data_numpy, label, sample_name
 
     def top_k(self, score, top_k):
+        warnings.warn("Shouldn't work")
         rank = score.argsort()
         hit_top_k = [l in rank[i, -top_k:] for i, l in enumerate(self.label)]
         return sum(hit_top_k) * 1.0 / len(hit_top_k)
@@ -145,6 +174,27 @@ def import_class(name):
     return mod
 
 
+def hdm_collate_fn(data):
+    arrays, *_ = zip(*data)
+    shortest = min_len #min(arr.shape[2] for arr in arrays)
+    data_new = []
+    labels_new, names_new = [], []
+    for arr, label, name in data:
+        splits = round(arr.shape[1]/shortest)
+        # if arr.shape[1] < shortest: continue
+        for split in range(splits):
+            start = (arr.shape[1]-shortest)*split//splits
+            data_new.append(torch.tensor(arr[:,start:start+shortest,:,:]))
+            labels_new.append(label)
+            names_new.append(name)
+    # if not data_new: return
+    print("HEY!", *[arr.shape[1] for arr in arrays])
+    print("HEY2!", *[arr.shape[1] for arr in data_new])
+    # assert False
+    data_new = torch.stack(data_new, dim=0)
+    return (data_new, torch.tensor(labels_new), names_new)
+    
+
 def test(data_path, label_path, vid=None, graph=None, is_3d=False):
     '''
     vis the samples using matplotlib
@@ -155,6 +205,7 @@ def test(data_path, label_path, vid=None, graph=None, is_3d=False):
     :param is_3d: when vis NTU, set it True
     :return:
     '''
+    warnings.warn("Not opimized to a new Feeder class, can fail") 
     import matplotlib.pyplot as plt
     loader = torch.utils.data.DataLoader(
         dataset=Feeder(data_path, label_path),

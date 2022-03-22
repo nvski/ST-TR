@@ -219,7 +219,12 @@ def get_parser():
         type=str2bool,
         default=False,
         help='if ture, recall and precision by category  will be displayed')
-
+    parser.add_argument(
+        '--loader_collate_fn',
+        type=str,
+        default='',
+        help='see torch.utils.data.DataLoader collate_fn argument'
+    )
     return parser
 
 
@@ -304,18 +309,21 @@ class Processor():
                 dataset=self.trainLoader,
                 batch_size=self.arg.batch_size,
                 shuffle=True,
-                num_workers=self.arg.num_worker)
+                num_workers=self.arg.num_worker,
+                collate_fn=import_class(self.arg.loader_collate_fn) if self.arg.loader_collate_fn else None)
 
         self.data_loader['val'] = torch.utils.data.DataLoader(
             dataset=self.testLoader,
             batch_size=self.arg.test_batch_size,
             shuffle=False,
-            num_workers=self.arg.num_worker)
+            num_workers=self.arg.num_worker,
+            collate_fn=import_class(self.arg.loader_collate_fn) if self.arg.loader_collate_fn else None)
         self.data_loader['test'] = torch.utils.data.DataLoader(
             dataset=self.testLoader,
             batch_size=self.arg.test_batch_size,
             shuffle=False,
-            num_workers=self.arg.num_worker)
+            num_workers=self.arg.num_worker,
+            collate_fn=import_class(self.arg.loader_collate_fn) if self.arg.loader_collate_fn else None)
 
     def load_model(self):
         output_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
