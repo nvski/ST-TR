@@ -225,6 +225,12 @@ def get_parser():
         default='',
         help='see torch.utils.data.DataLoader collate_fn argument'
     )
+    parser.add_argument(
+        '--balance_classes',
+        type=bool,
+        default=True,
+        help='if true, use weights in cross entropy loss'
+    )
     return parser
 
 
@@ -331,7 +337,15 @@ class Processor():
         self.output_device = output_device
         Model = import_class(self.arg.model)
         self.model = Model(**self.arg.model_args, device=self.output_device).cuda(output_device)
-        self.loss = nn.CrossEntropyLoss().to(output_device)
+        if self.arg.balance_classes:
+            dl = self.data_loader['train']
+            values, counts = np.unique(dl.dataset.label, return_counts=True)
+            self.weights = torch.tensor(
+                counts[values]/len(dl.dataset),
+                device=self.output_device, dtype=torch.float32)
+        else:
+            self.weights=None
+        self.loss = nn.CrossEntropyLoss(self.weights).to(output_device)
 
         if self.arg.weights:
             self.print_log('Load weights from {}.'.format(self.arg.weights))
