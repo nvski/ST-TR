@@ -252,7 +252,7 @@ class Model(nn.Module):
 
     def forward(self, x, label, name):
         N, C, T, V, M = x.size()
-        print(x.shape)
+        # print(x.shape)
         if (self.concat_original):
             x_coord = x
             x_coord = x_coord.permute(0, 4, 1, 2, 3).reshape(N * M, C, T, V)

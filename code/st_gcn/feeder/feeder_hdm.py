@@ -74,7 +74,9 @@ class Feeder_hdm05(Dataset):
         ])
         self.data = self.data.reshape(*self.data.shape, 1)
         self.data = self.data.transpose(0,3,1,2,4)
-        self.label = [ann["action_id"] for ann in self.annotations]
+        self.label = np.array([ann["action_id"] for ann in self.annotations])
+        self.label[self.label==15] = 0
+        self.label[self.label==16] = 14
         self.sample_name = [ann["seq_id"] for ann in self.annotations]
 
         # try:
