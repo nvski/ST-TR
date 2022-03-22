@@ -1,39 +1,17 @@
 import numpy as np
 from . import tools
 
-# Joint index:
-# {0,  "HeadTop"}
-# {1,  "Head"},
-# {2,  "Neck"},
-# {3,  "RClavicle"},
-# {4,  "RShoulder"},
-# {5,  "RElbow"},
-# {6,  "RWrist"},
-# {7,  "RFingers"},
-# {8,  "LClavicle"},
-# {9,  "LShoulder"},
-# {10, "LElbow"},
-# {11, "LWrist"},
-# {12, "LFingers"}
-# {13, "Chest"}
-# {14, "Belly"}
-# {15, "Root"}
-# {16, "RHip"},
-# {17, "RKnee"},
-# {18, "RAnkle"},
-# {19, "RToes"},
-# {20, "LHip"},
-# {21, "LKnee"},
-# {22, "LAnkle"},
-# {23, "LToes"},
+
 
 
 # Edge format: (origin, neighbor)
-num_node = 24
+num_node = 31 
 self_link = [(i, i) for i in range(num_node)]
-inward = [(0, 1), (1, 2), (3, 2), (8, 2), (13, 2), (4, 3), (5, 4), (6, 5), (7, 6),  # Top + right_arm
-          (9, 8), (10, 9), (11, 10), (12, 11), (14, 13), (15, 14), (16, 15), (20, 15),  # left arm + bottom
-          (17, 16), (18, 17), (19, 18), (21, 20), (22, 21), (23, 22)]  # legs
+inward = [
+    ( 1, 1), ( 3, 2), ( 4, 3), ( 5, 4), ( 0, 6), ( 8, 7), ( 9, 8), (10, 9), ( 0,11), (13,12),
+    (14,13), (15,14), (17,16), ( 0,17), (18,14), (19,18), (20,19), (22,21), ( 0,23), (25,14),
+    (26,25), (27,26), (29,28), ( 0,30)
+]  # legs
 outward = [(j, i) for (i, j) in inward]
 neighbor = inward + outward
 
