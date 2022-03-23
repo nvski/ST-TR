@@ -11,11 +11,12 @@ sys.path.extend(['../'])
 from .feeder import tools
 
 
-min_len = 132  # 20-th percentile of train set
+min_len = 0  # 132  # 20-th percentile of train set
 class Feeder_hdm05(Dataset):
     def __init__(self, data_path, label_path='ignored',
                  random_choose=False, random_shift=False, random_move=False,
-                 window_size=-1, normalization=False, debug=False, use_mmap=True):
+                 window_size=-1, normalization=False, debug=False, use_mmap=True,
+                 min_len = None):
         """
 
         :param data_path:
@@ -38,6 +39,7 @@ class Feeder_hdm05(Dataset):
         self.window_size = window_size
         self.normalization = normalization
         self.use_mmap = use_mmap
+        self.min_len = min_len
         self.load_data()
         if normalization:
             self.get_mean_map()
@@ -58,27 +60,36 @@ class Feeder_hdm05(Dataset):
         self.seqs = {seq["seq_id"]: seq["data"] for seq in self.raw_data}
         self.annotations = list(chain(*[t["annotations"] for t in self.raw_data]))
         
-        def cut(annotations):
-            for ann in annotations:
-                dur = ann["duration"]
-                if dur < min_len: continue
-                splits = round(dur/min_len)
-                for split in range(splits):
-                    start = (dur-min_len)*split//splits
-                    yield {**ann, "start_frame":start, "duration":min_len}     
-        
-        self.annotations = list(cut(self.annotations))
-        self.data = np.stack([
-            self.seqs[ann["seq_id"]][ann["start_frame"]:ann["start_frame"]+ann["duration"]]
-            for ann in self.annotations        
-        ])
-        self.data = self.data.reshape(*self.data.shape, 1)
-        self.data = self.data.transpose(0,3,1,2,4)
+        if self.min_len is not None:
+            def cut(annotations):
+                for ann in annotations:
+                    dur = ann["duration"]
+                    if dur < min_len: continue
+                    splits = round(dur/min_len)
+                    for split in range(splits):
+                        start = (dur-min_len)*split//splits
+                        yield {**ann, "start_frame":start, "duration":min_len}     
+            
+            self.annotations = list(cut(self.annotations))
+            self.data = np.stack([
+                self.seqs[ann["seq_id"]][ann["start_frame"]:ann["start_frame"]+ann["duration"]]
+                for ann in self.annotations        
+            ])
+            self.data = self.data.reshape(*self.data.shape, 1)
+            self.data = self.data.transpose(0,3,1,2,4)
+        else:
+            self.data = [
+                self.seqs[ann["seq_id"]][ann["start_frame"]:ann["start_frame"]+ann["duration"]]\
+                    .reshape(*self.seqs[ann["seq_id"]][ann["start_frame"]:ann["start_frame"]+ann["duration"]].shape, 1)\
+                    .transpose(2,0,1,3)
+                for ann in self.annotations        
+            ]
+            
+    
         self.label = np.array([ann["action_id"] for ann in self.annotations])
         self.label[self.label==15] = 0
         self.label[self.label==16] = 14
         self.sample_name = [ann["seq_id"] for ann in self.annotations]
-
         # try:
         #     with open(self.label_path) as f:
         #         self.sample_name, self.label = pickle.load(f)
@@ -178,7 +189,7 @@ def import_class(name):
 
 def hdm_collate_fn(data):
     arrays, *_ = zip(*data)
-    shortest = min_len #min(arr.shape[2] for arr in arrays)
+    shortest = min(arr.shape[1] for arr in arrays)
     data_new = []
     labels_new, names_new = [], []
     for arr, label, name in data:
@@ -189,10 +200,6 @@ def hdm_collate_fn(data):
             data_new.append(torch.tensor(arr[:,start:start+shortest,:,:]))
             labels_new.append(label)
             names_new.append(name)
-    # if not data_new: return
-    print("HEY!", *[arr.shape[1] for arr in arrays])
-    print("HEY2!", *[arr.shape[1] for arr in data_new])
-    # assert False
     data_new = torch.stack(data_new, dim=0)
     return (data_new, torch.tensor(labels_new), names_new)
     

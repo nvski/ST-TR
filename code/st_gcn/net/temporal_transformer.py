@@ -201,11 +201,11 @@ class tcn_unit_attention(nn.Module):
             else:
                 if (not self.only_temporal_att):
                     x = self.tcn_conv(x_sum)
-                    result = torch.cat((x, attn_out), dim=1)
+                    result = torch.cat((x[:,:,:attn_out.shape[2]], attn_out), dim=1)
                 else:
                     result = attn_out
 
-                result = result+(x_sum if (self.down is None) else self.down(x_sum))
+                result = result+(x_sum if (self.down is None) else self.down(x_sum))[:,:,:result.shape[2]]
 
 
         else:

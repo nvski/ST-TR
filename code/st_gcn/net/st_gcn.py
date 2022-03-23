@@ -431,8 +431,8 @@ class TCN_GCN_unit(nn.Module):
 
     def forward(self, x, label, name):
         # N, C, T, V = x.size()
-        x = self.tcn1(self.gcn1(x, label, name)) + (x if
-                                                    (self.down1 is None) else self.down1(x))
+        l = self.tcn1(self.gcn1(x, label, name)) 
+        x = l + (x if (self.down1 is None) else self.down1(x)[:,:,:l.shape[2]])
 
         return x
 
